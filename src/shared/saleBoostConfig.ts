@@ -1,4 +1,4 @@
-export type Plan = "FREE" | "MEDIUM";
+export type Plan = "FREE" | "PRO" | "PREMIUM";
 export type Action = "NEW_TAB" | "SAME_TAB";
 export type Visibility = "ALL" | "DESKTOP" | "MOBILE";
 
@@ -18,9 +18,16 @@ export type SaleBoostConfig = {
   hideOnBackdropClick: BooleanString;
   visibility: Visibility;
   popupDelay: number; // seconds
+  plan: Plan;
 };
 
-export const DEFAULT_PLAN: Plan = "MEDIUM";
+export const DEFAULT_PLAN: Plan = "FREE";
+
+export const MAP_PLAN_TO_CONFIG = {
+  basic: "FREE",
+  pro: "PRO",
+  premium: "PREMIUM",
+};
 
 export const DEFAULT_CONFIG: SaleBoostConfig = {
   header: "🔥 15% OFF SALE",
@@ -37,13 +44,14 @@ export const DEFAULT_CONFIG: SaleBoostConfig = {
   hideOnBackdropClick: "1",
   visibility: "ALL",
   popupDelay: 2,
+  plan: DEFAULT_PLAN,
 };
 
 export function applyPlanGating(
   config: SaleBoostConfig,
   plan: Plan
 ): SaleBoostConfig {
-  if (plan === "MEDIUM") return config;
+  if (plan === DEFAULT_PLAN) return config;
   return {
     ...config,
     popupDelay: 0,
@@ -94,7 +102,7 @@ export function fromEmbedParameters(params: Record<string, unknown>): {
 } {
   const plan = coerceEnum<Plan>(
     params.plan,
-    ["FREE", "MEDIUM"] as const,
+    ["FREE", "PRO", "PREMIUM"] as const,
     DEFAULT_PLAN
   );
 
@@ -128,6 +136,11 @@ export function fromEmbedParameters(params: Record<string, unknown>): {
       DEFAULT_CONFIG.visibility
     ),
     popupDelay: coerceNumber(params.popupDelay, DEFAULT_CONFIG.popupDelay),
+    plan: coerceEnum<Plan>(
+      params.plan,
+      ["FREE", "PRO", "PREMIUM"] as const,
+      DEFAULT_CONFIG.plan
+    ),
   };
 
   return { plan, config };

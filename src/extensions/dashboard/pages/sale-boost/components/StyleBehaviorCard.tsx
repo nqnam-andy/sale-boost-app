@@ -14,7 +14,7 @@ import { useSaleBoost } from "../context/SaleBoostContext";
 import type { SaleBoostConfig } from "../../../../../shared/saleBoostConfig";
 
 export const StyleBehaviorCard: FC = () => {
-  const { config, updateConfig, premiumFieldsDisabled } = useSaleBoost();
+  const { config, updateConfig, isFree, isPremium } = useSaleBoost();
 
   return (
     <Card>
@@ -74,15 +74,13 @@ export const StyleBehaviorCard: FC = () => {
 
           <FormField
             label="Popup delay (seconds)"
-            infoContent={
-              premiumFieldsDisabled ? "Available on Medium plan." : undefined
-            }
+            infoContent={isFree ? "Not available on Free plan." : undefined}
           >
             <NumberInput
               min={0}
               step={1}
               value={config.popupDelay}
-              disabled={premiumFieldsDisabled}
+              disabled={isFree}
               onChange={(value) =>
                 updateConfig({ popupDelay: value == null ? 0 : value })
               }
@@ -91,39 +89,33 @@ export const StyleBehaviorCard: FC = () => {
 
           <FormField
             label="Image URL"
-            infoContent={
-              premiumFieldsDisabled ? "Available on Medium plan." : undefined
-            }
+            infoContent={isFree ? "Not available on Free plan." : undefined}
           >
             <Input
               value={config.imageUrl}
-              disabled={premiumFieldsDisabled}
+              disabled={isFree}
               onChange={(e) => updateConfig({ imageUrl: e.target.value })}
             />
           </FormField>
 
           <FormField
             label="Image click URL"
-            infoContent={
-              premiumFieldsDisabled ? "Available on Medium plan." : undefined
-            }
+            infoContent={!isPremium ? "Available on Medium plan." : undefined}
           >
             <Input
               value={config.imageLink}
-              disabled={premiumFieldsDisabled}
+              disabled={!isPremium}
               onChange={(e) => updateConfig({ imageLink: e.target.value })}
             />
           </FormField>
 
           <FormField
             label="Visibility"
-            infoContent={
-              premiumFieldsDisabled ? "Available on Medium plan." : undefined
-            }
+            infoContent={!isPremium ? "Available on Medium plan." : undefined}
           >
             <Dropdown
               selectedId={config.visibility}
-              disabled={premiumFieldsDisabled}
+              disabled={!isPremium}
               options={[
                 { id: "ALL", value: "All devices" },
                 { id: "DESKTOP", value: "Desktop only" },
@@ -141,4 +133,3 @@ export const StyleBehaviorCard: FC = () => {
     </Card>
   );
 };
-

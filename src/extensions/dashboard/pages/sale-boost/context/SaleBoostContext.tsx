@@ -8,15 +8,17 @@ import {
   type ReactNode,
 } from "react";
 
+import { appInstances } from "@wix/app-management";
 import { useEmbeds } from "../../../hooks/wix-embeds";
 import {
   applyPlanGating,
   DEFAULT_CONFIG,
   DEFAULT_PLAN,
-  fromEmbedParameters,
   toEmbedParameters,
+  MAP_PLAN_TO_CONFIG,
   type Plan,
   type SaleBoostConfig,
+  fromEmbedParameters,
 } from "../../../../../shared/saleBoostConfig";
 import type { SaleBoostContextValue, SaveState } from "../types";
 
@@ -47,13 +49,43 @@ export const SaleBoostProvider: FC<Props> = ({ children }) => {
   const [isDirty, setIsDirty] = useState(false);
   const [saveState, setSaveState] = useState<SaveState>("idle");
 
-  // const isPremium = plan === "MEDIUM";
-  const isPremium = true;
-  const premiumFieldsDisabled = !isPremium;
+  const isPremium = plan === "PREMIUM";
+  const isFree = plan === DEFAULT_PLAN;
+
+  const getPlan = async () => {
+    const instanceResponse: unknown = await appInstances.getAppInstance();
+    const instance = (
+      instanceResponse as {
+        instance?: {
+          isFree?: boolean;
+          billing?: { packageName?: string };
+        };
+      }
+    )?.instance;
+
+    return (
+      (MAP_PLAN_TO_CONFIG as Record<string, Plan>)[
+        instance?.billing?.packageName as keyof typeof MAP_PLAN_TO_CONFIG
+      ] || DEFAULT_PLAN
+    );
+  };
+
+  const updateDataPlanEmbed = async (plan: Plan, config: SaleBoostConfig) => {
+    try {
+      const payload = toEmbedParameters(plan, config);
+      await embeds.saveParams(payload);
+    } catch (error) {
+      console.error("Error updating data plan embed", error);
+    }
+  };
 
   useEffect(() => {
     (async () => {
       try {
+        // Get plan from app instance
+        const resolvedPlan = await getPlan();
+
+        // Get data embed parameters
         const params = await embeds.loadParams();
         const parsed = fromEmbedParameters(params);
 
@@ -67,12 +99,24 @@ export const SaleBoostProvider: FC<Props> = ({ children }) => {
           })
         ) as SaleBoostConfig;
 
-        // setPlan(parsed.plan);
-        setPlan("MEDIUM");
+        if (resolvedPlan !== parsed.plan) {
+          updateDataPlanEmbed(resolvedPlan, sanitizedConfig);
+        }
+
+        setPlan(resolvedPlan);
         setConfig(sanitizedConfig);
         setIsDirty(false);
         setSaveState("idle");
-      } catch {}
+      } catch (error) {
+        console.error("Error initializing sale boost", error);
+      }
+    })();
+  }, []);
+
+  useEffect(() => {
+    (async () => {
+      const resolvedPlan = await getPlan();
+      setPlan(resolvedPlan);
     })();
   }, []);
 
@@ -87,10 +131,7 @@ export const SaleBoostProvider: FC<Props> = ({ children }) => {
       })
     ) as Partial<SaleBoostConfig>;
 
-    setConfig((prev) => {
-      const newConfig = { ...prev, ...sanitizedPatch };
-      return newConfig;
-    });
+    setConfig((prev) => ({ ...prev, ...sanitizedPatch }));
     setIsDirty(true);
     setSaveState("idle");
   };
@@ -113,18 +154,12 @@ export const SaleBoostProvider: FC<Props> = ({ children }) => {
     setSaveState("idle");
   };
 
-  const handleSetPlan = (p: Plan) => {
-    setIsDirty(true);
-    setSaveState("idle");
-  };
-
   const value: SaleBoostContextValue = {
     plan,
-    setPlan: handleSetPlan,
     config,
     updateConfig,
     isPremium,
-    premiumFieldsDisabled,
+    isFree,
     isDirty,
     saveState,
     onSave,

@@ -108,9 +108,11 @@ const ModalPreviewContent: FC<PreviewProps> = ({ config, isPremium }) => {
         </button>
       )}
 
-      <div style={styles.imageWrapper}>
-        <img src={config.imageUrl} alt="Sale" style={styles.image} />
-      </div>
+      {showImage && (
+        <div style={styles.imageWrapper}>
+          <img src={config.imageUrl} alt="Sale" style={styles.image} />
+        </div>
+      )}
 
       <div style={styles.content}>
         <h2 style={{ ...styles.header, color: config.textColor }}>

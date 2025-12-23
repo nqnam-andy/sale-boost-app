@@ -4,11 +4,10 @@ export type SaveState = "idle" | "saving" | "saved" | "error";
 
 export interface SaleBoostContextValue {
   plan: Plan;
-  setPlan: (p: Plan) => void;
   config: SaleBoostConfig;
   updateConfig: (patch: Partial<SaleBoostConfig>) => void;
   isPremium: boolean;
-  premiumFieldsDisabled: boolean;
+  isFree: boolean;
   isDirty: boolean;
   saveState: SaveState;
   onSave: () => Promise<void>;
@@ -16,4 +15,3 @@ export interface SaleBoostContextValue {
   isLoading: boolean;
   error: { message?: string } | null;
 }
-

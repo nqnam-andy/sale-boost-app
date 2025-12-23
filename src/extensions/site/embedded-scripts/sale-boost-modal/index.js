@@ -54,6 +54,42 @@ function getPopupData() {
   };
 }
 
+// Enforce plan-based feature access
+function applyPlanRestrictions(popupData) {
+  if (!popupData) return null;
+
+  const plan = "FREE";
+  const sanitizedData = { ...popupData };
+
+  // Helpers to neutralize restricted options
+  const disableImageLink = () => {
+    sanitizedData.imageLink = "";
+  };
+
+  const disableVisibilityControl = () => {
+    sanitizedData.visibility = "ALL";
+  };
+
+  switch (plan) {
+    case "FREE":
+      sanitizedData.imageUrl = "";
+      disableImageLink();
+      sanitizedData.popupDelay = "0";
+      disableVisibilityControl();
+      break;
+    case "PRO":
+      disableImageLink();
+      disableVisibilityControl();
+      break;
+    case "PREMIUM":
+    default:
+      // All features available
+      break;
+  }
+
+  return sanitizedData;
+}
+
 // Create popup HTML
 function createPopupHTML(popupData) {
   const closeButton =
@@ -173,7 +209,7 @@ function shouldShowModal(visibility) {
 
 // Initialize popup
 function initPopup() {
-  const popupData = getPopupData();
+  const popupData = applyPlanRestrictions(getPopupData());
   if (!popupData) return;
 
   // Check visibility setting before showing modal
@@ -220,14 +256,6 @@ function initPopup() {
         handleImageClick(popupData, overlay);
       });
     }
-
-    // Handle image error
-    // const image = overlay.querySelector(".popup-image-wrapper img");
-    // if (image) {
-    //   image.addEventListener("error", function () {
-    //     this.style.display = "none";
-    //   });
-    // }
   }, delay * 1000);
 }
 
